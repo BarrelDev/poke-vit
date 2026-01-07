@@ -1,8 +1,11 @@
-torch==2.9.0 --index-url https://download.pytorch.org/whl/cu130 
-torchvision --index-url https://download.pytorch.org/whl/cu130
+https://download.pytorch.org/whl/cu130/torch-2.9.1%2Bcu130-cp311-cp311-win_amd64.whl
+https://download.pytorch.org/whl/cu130/torchvision-0.24.1%2Bcu130-cp311-cp311-win_amd64.whl#sha256=f564b9fdbc336ac187780931331fb4253f8511deae914dde12dca5bf17b3045f
 numpy
 pandas
 matplotlib
 requests
 beautifulsoup4
 tqdm
+kaggle
+scikit-learn
+timm

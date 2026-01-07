@@ -19,18 +19,27 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
 
-from main import VisionTransformer
+from main import VisionTransformer, CSVDataset, load_csv_entries
 
 
-def make_test_loader(data_dir, img_size=224, batch_size=32, num_workers=4):
+def make_test_loader(data_dir=None, csv_path=None, dataset_root=None, img_size=128, batch_size=16, num_workers=4):
     tfms = transforms.Compose([
         transforms.Resize((img_size, img_size)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
-    dataset = datasets.ImageFolder(data_dir, transform=tfms)
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
-    return loader, dataset.classes, dataset
+    if csv_path:
+        entries = load_csv_entries(csv_path)
+        # build classes from CSV entries
+        labels = sorted({lbl for _, lbl in entries})
+        class_to_idx = {c: i for i, c in enumerate(labels)}
+        dataset = CSVDataset(entries, dataset_root or '.', class_to_idx, transform=tfms)
+        loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+        return loader, dataset.classes, dataset
+    else:
+        dataset = datasets.ImageFolder(data_dir, transform=tfms)
+        loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+        return loader, dataset.classes, dataset
 
 
 def evaluate(model, loader, device, out_csv=None, classes=None):
@@ -92,15 +101,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default='vit_pokemon.pth', help='Path to model checkpoint')
     parser.add_argument('--data', default='data/pokemon', help='Path to dataset root (ImageFolder)')
-    parser.add_argument('--img-size', type=int, default=224)
-    parser.add_argument('--batch-size', type=int, default=32)
+    parser.add_argument('--img-size', type=int, default=128)
+    parser.add_argument('--batch-size', type=int, default=16)
     parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu')
     parser.add_argument('--out-csv', help='Optional CSV to write predictions')
+    parser.add_argument('--csv', help='Optional CSV file (image_path,label) to evaluate instead of ImageFolder')
+    parser.add_argument('--dataset-root', default='pokemon-dataset-1000', help='Root directory that image paths in CSV are relative to')
     args = parser.parse_args()
 
     device = torch.device(args.device)
 
-    loader, classes, dataset = make_test_loader(args.data, img_size=args.img_size, batch_size=args.batch_size)
+    loader, classes, dataset = make_test_loader(data_dir=args.data, csv_path=args.csv, dataset_root=args.dataset_root, img_size=args.img_size, batch_size=args.batch_size)
     num_classes = len(classes)
 
     model = VisionTransformer(img_size=args.img_size, num_classes=num_classes, embed_dim=256, depth=6, num_heads=8)

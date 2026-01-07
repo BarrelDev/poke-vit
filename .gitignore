@@ -1,6 +1,10 @@
-.env
+.venv
 data/
 __pycache__/
 *.pth
 *.csv
 names
+.env
+.kaggle/
+pokemon-dataset-1000/
+pokemon-dataset-1000.zip
