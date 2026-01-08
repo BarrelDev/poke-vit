@@ -84,7 +84,7 @@ def evaluate(model, loader, device, out_csv=None, classes=None):
                     prob = nn.functional.softmax(logits, dim=1)[0]
                     pred = int(prob.argmax().item())
                     p = float(prob[pred].item())
-                    img_path = loader.dataset.imgs[idx][0] if hasattr(loader.dataset, 'imgs') else ''
+                    img_path = loader.dataset.samples[idx][0] #if hasattr(loader.dataset, 'imgs') else ''
                     writer.writerow([img_path, classes[label], classes[pred], f"{p:.4f}"])
 
     overall_acc = correct / total if total > 0 else 0.0
@@ -135,6 +135,7 @@ def main():
     # Optionally print confusion matrix summary for top classes
     print('\nConfusion matrix (rows=true, cols=pred):')
     print(conf.numpy())
+    # conf.numpy().tofile('confusion_matrix.csv', sep=',')
 
 
 if __name__ == '__main__':
